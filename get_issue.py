@@ -91,66 +91,62 @@ def get_issue(url, filename):
         issue_url = url['url'] + '/issues' + f"/{issue_num}"
         json["ID"] = issue_num
         # print(issue_url)
-        try:
-            response = requests.get(issue_url, headers=headers)
-            limit = response.headers.get("X-RateLimit-Limit")
-            remaining = response.headers.get("X-RateLimit-Remaining")
-            reset = response.headers.get("X-RateLimit-Reset")
-            current_timestamp = int(time.time())
-            time_diff = int(reset) - current_timestamp
-            print(f"\n可请求次数: {limit}")
-            print(f"剩余请求次数: {remaining}")
-            print(f"重置时间还有: {time_diff // 60} 分钟")
+        response = requests.get(issue_url, headers=headers)
+        limit = response.headers.get("X-RateLimit-Limit")
+        remaining = response.headers.get("X-RateLimit-Remaining")
+        reset = response.headers.get("X-RateLimit-Reset")
+        current_timestamp = int(time.time())
+        time_diff = int(reset) - current_timestamp
+        print(f"\n可请求次数: {limit}")
+        print(f"剩余请求次数: {remaining}")
+        print(f"重置时间还有: {time_diff // 60} 分钟")
 
-            time.sleep(0.5)
-            if int(remaining) > 20:
-                if response.status_code == 200:
-                    issue_data = response.json()  # 解析 JSON 响应
-                    json['主题'] = issue_data['title']
-                    expand += f"{issue_data['created_at']}<br>{issue_data['title']}<ul><li>"
+        time.sleep(0.5)
+        if int(remaining) > 20:
+            if response.status_code == 200:
+                issue_data = response.json()  # 解析 JSON 响应
+                json['主题'] = issue_data['title']
+                expand += f"{issue_data['created_at']}<br>{issue_data['title']}<ul><li>"
+                json1 = {}
+                comments_url = issue_data['comments_url']
+                comments_response = requests.get(comments_url, headers=headers)
+                if issue_data['body'] is not None:
+                    json1["楼ID"] = "0"
+                    json1[f'回复'] = issue_data["body"]
+                    json1["扩展字段"] = {"回复人": issue_data['user']['login']}
+                    expand += f"[{issue_data['user']['login']}]{issue_data['body']}</li>"
+                    item_data.append(json1)
                     json1 = {}
-                    comments_url = issue_data['comments_url']
-                    comments_response = requests.get(comments_url, headers=headers)
-                    if issue_data['body'] is not None:
-                        json1["楼ID"] = "0"
-                        json1[f'回复'] = issue_data["body"]
-                        json1["扩展字段"] = {"回复人": issue_data['user']['login']}
-                        expand += f"[{issue_data['user']['login']}]{issue_data['body']}</li>"
-                        item_data.append(json1)
-                        json1 = {}
-                    if comments_response.status_code == 200:
-                        comments = comments_response.json()
-                        metadata["发帖时间"] = issue_data["created_at"]
-                        metadata["回复数"] = len(comments)
-                        for i, comment in enumerate(comments):
-                            i += 1
-                            comment_body = comment['body']
-                            json1["楼ID"] = f"{i}"
-                            if comment_body is not None:
-                                json1[f'回复'] = comment_body
-                                json1["扩展字段"] = {"回复人": comment['user']['login']}
-                                expand += f"[{comment['user']['login']}]{comment_body}</li>"
-                                item_data.append(json1)
-                                json1 = {}
-                        expand += "</ul>"
-                        json["回复"] = item_data
-                        item_data = []
-                        metadata["拓展字段"] = {"原文": expand}
-                        json["元数据"] = metadata
-                        repo[f"问题{k}"] = json
-                        metadata = {}
-                        json = {}
-                    else:
-                        print(f"Failed to fetch comments. Status code: {comments_response.status_code}")
-                        break
+                if comments_response.status_code == 200:
+                    comments = comments_response.json()
+                    metadata["发帖时间"] = issue_data["created_at"]
+                    metadata["回复数"] = len(comments)
+                    for i, comment in enumerate(comments):
+                        i += 1
+                        comment_body = comment['body']
+                        json1["楼ID"] = f"{i}"
+                        if comment_body is not None:
+                            json1[f'回复'] = comment_body
+                            json1["扩展字段"] = {"回复人": comment['user']['login']}
+                            expand += f"[{comment['user']['login']}]{comment_body}</li>"
+                            item_data.append(json1)
+                            json1 = {}
+                    expand += "</ul>"
+                    json["回复"] = item_data
+                    item_data = []
+                    metadata["拓展字段"] = {"原文": expand}
+                    json["元数据"] = metadata
+                    repo[f"问题{k}"] = json
+                    metadata = {}
+                    json = {}
                 else:
-                    print(f"Failed to fetch issue details. Status code: {response.status_code}")
+                    print(f"Failed to fetch comments. Status code: {comments_response.status_code}")
                     break
             else:
-                time.sleep(time_diff)
-        except:
-            write_to_file(repo, name)
-            time.sleep(10)
+                print(f"Failed to fetch issue details. Status code: {response.status_code}")
+                break
+        else:
+            time.sleep(time_diff)
     write_to_file(repo, name)
 
 
