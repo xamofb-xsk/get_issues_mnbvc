@@ -151,7 +151,6 @@ def get_issue(url, filename):
         except:
             write_to_file(repo, name)
             time.sleep(10)
-
     write_to_file(repo, name)
 
 
@@ -170,5 +169,6 @@ if __name__ == '__main__':
     for filename in jsonl_filenames:
         data = get_data(filename)
         for url in data:
+            issue_nums = []
             issue_nums = get_issue_num(url)
             get_issue(url, filename)
