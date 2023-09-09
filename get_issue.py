@@ -34,7 +34,6 @@ def get_data(filename):
         for line in tqdm(lines, desc="Processing"):  # 使用 tqdm 来添加进度条
             json_obj = json.loads(line)
             data.append(json_obj)
-        print(len(data))
         return data
 
 
