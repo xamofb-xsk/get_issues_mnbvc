@@ -12,7 +12,7 @@ TARGET_PATH = './output'  # 目的路径
 THREADS = 4  # 线程池大小
 
 github_tokens = [
-    "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"]
+    ""]
 headers = [{"Authorization": f"token {github_token}"}
            for github_token in github_tokens]
 
