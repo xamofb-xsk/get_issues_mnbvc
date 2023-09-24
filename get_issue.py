@@ -63,9 +63,8 @@ def get_issues(metadata, record_file):
         
     if metadata['id'] in record:
         return
-
-    with open(os.path.join(TARGET_PATH, f'{metadata["id"]}.jsonl'), 'w', encoding='utf-8') as f:
-        pass
+    if os.path.exists(os.path.join(TARGET_PATH, f'{metadata["id"]}.jsonl')):
+        os.remove(os.path.join(TARGET_PATH, f'{metadata["id"]}.jsonl'))
 
     page = 1
     while True:
@@ -126,4 +125,7 @@ if __name__ == '__main__':
         abs_filename = os.path.join(SOURCE_PATH, filename)
         record_file = os.path.join(TMP_PATH, filename.replace('jsonl', 'json'))
         for metadata in get_data(abs_filename):
-            get_issues(metadata, record_file)
+            try:
+                get_issues(metadata, record_file)
+            except Exception as e:
+                print(e)
